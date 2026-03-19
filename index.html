@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suno Infinity | Auto-Pilot Mode</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>SUNO INFINITY | ULTIMATE EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #020205;
+            --bg-dark: #050508;
             --primary: #bc13fe;
             --secondary: #00f0ff;
             --accent: #ff007a;
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(255, 255, 255, 0.03);
             --border: rgba(255, 255, 255, 0.1);
         }
 
@@ -24,248 +24,311 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            transition: background 0.2s ease;
         }
 
         #bg-canvas { position: fixed; top: 0; left: 0; z-index: -2; }
-        .scanlines {
+        
+        /* 掃描線特效 */
+        .overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none; z-index: -1;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 10;
         }
 
         header {
-            padding: 30px 50px;
+            padding: 25px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            z-index: 100;
         }
 
         .brand h1 {
             font-family: 'Orbitron', sans-serif;
-            font-size: 24px;
-            letter-spacing: 4px;
+            font-size: 22px;
+            letter-spacing: 5px;
             background: linear-gradient(90deg, var(--secondary), var(--primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 10px rgba(0,240,255,0.5));
         }
 
         main {
             display: grid;
-            grid-template-columns: 320px 1fr 320px;
-            gap: 25px;
-            padding: 0 30px 20px;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            padding: 0 30px 30px;
             flex: 1;
-            perspective: 1000px;
+            perspective: 1200px;
         }
 
         .panel {
             background: var(--glass);
-            backdrop-filter: blur(25px);
+            backdrop-filter: blur(30px);
             border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 25px;
+            border-radius: 24px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
         }
 
+        /* 歌曲清單 */
         .track-card {
-            padding: 15px;
-            margin-bottom: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
             border-radius: 12px;
-            background: rgba(255,255,255,0.03);
-            border-left: 4px solid transparent;
+            background: rgba(255,255,255,0.02);
             cursor: pointer;
-            transition: all 0.3s;
+            transition: 0.3s;
+            border: 1px solid transparent;
         }
-        .track-card:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
         .track-card.active {
-            background: rgba(161, 52, 255, 0.15);
-            border-left-color: var(--secondary);
-            box-shadow: inset 0 0 15px rgba(0,240,255,0.1);
+            background: rgba(0, 240, 255, 0.1);
+            border-color: var(--secondary);
         }
 
-        .visual-core { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .sphere-wrapper { position: relative; width: 260px; height: 260px; margin-bottom: 30px; }
+        /* 主視覺區 */
+        .visual-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sphere-box {
+            position: relative;
+            width: 400px; height: 400px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        #ring-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+
         .sphere {
-            width: 100%; height: 100%; border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, var(--secondary), var(--primary), #000);
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff, var(--primary), #000);
             box-shadow: 0 0 50px rgba(188, 19, 254, 0.5);
-            transition: transform 0.1s ease;
+            z-index: 2;
         }
 
-        .lyrics-box {
-            width: 100%; height: 200px; overflow: hidden; position: relative;
+        /* 歌詞 */
+        .lyrics-wrapper {
+            height: 150px;
+            overflow: hidden;
             mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent);
+            margin-top: 20px;
+            width: 100%;
         }
-        .lyric-item {
-            font-size: 18px; color: rgba(255,255,255,0.2);
-            padding: 12px 0; text-align: center; transition: all 0.4s;
+
+        .lyric-line {
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 10px 0;
+            color: rgba(255,255,255,0.2);
+            transition: 0.4s;
         }
-        .lyric-item.active { color: #fff; transform: scale(1.15); text-shadow: 0 0 15px var(--secondary); }
-
-        .play-main {
-            width: 65px; height: 65px; border-radius: 50%; border: none;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 20px; transition: 0.3s;
+        .lyric-line.active {
+            color: var(--secondary);
+            transform: scale(1.1);
+            text-shadow: 0 0 10px var(--secondary);
         }
-        .play-main:hover { transform: scale(1.1); filter: brightness(1.2); }
 
-        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--secondary); border-radius: 50%; cursor: pointer;}
+        /* 控制器 */
+        .btn-play {
+            width: 60px; height: 60px;
+            border-radius: 50%; border: none;
+            background: var(--primary);
+            cursor: pointer; margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 20px var(--primary);
+        }
 
-        .vis-footer { height: 70px; width: 100%; padding: 0 30px 10px; }
-        #vis-canvas { width: 100%; height: 100%; opacity: 0.7; }
+        input[type="range"] { -webkit-appearance: none; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--secondary); border-radius: 50%; }
 
-        /* 捲軸美化 */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
     <canvas id="bg-canvas"></canvas>
-    <div class="scanlines"></div>
+    <div class="overlay"></div>
 
     <header>
-        <div class="brand">
-            <h1>SUNO INFINITY</h1>
-            <div id="repo-name" style="font-size: 9px; color: var(--secondary); letter-spacing: 2px; text-transform: uppercase;">SCANNING REPOSITORY...</div>
-        </div>
-        <div id="status-tag" style="font-size: 11px; color: var(--accent); font-family: 'Orbitron';">AUTO_SYNC_ENABLED</div>
+        <div class="brand"><h1>SUNO INFINITY</h1></div>
+        <div id="status" style="font-family: Orbitron; font-size: 10px; color: var(--secondary);">INITIALIZING...</div>
     </header>
 
-    <main id="tilt-container">
-        <aside class="panel">
-            <h3 style="margin-bottom: 20px; font-family: 'Orbitron'; font-size: 12px; color: var(--secondary);">DB_PLAYLIST</h3>
-            <div id="list-container" style="overflow-y:auto; flex:1">
-                <div style="color:rgba(255,255,255,0.3); font-size:12px;">Connecting to GitHub...</div>
-            </div>
+    <main id="main-ui">
+        <aside class="panel" id="left-panel">
+            <h4 style="font-family: Orbitron; font-size: 12px; color: var(--secondary); margin-bottom: 15px;">PLAYLIST_ARCHIVE</h4>
+            <div id="playlist" style="overflow-y: auto; flex: 1;"></div>
         </aside>
 
-        <section class="visual-core">
-            <div class="sphere-wrapper">
-                <div class="sphere" id="sphere"></div>
+        <section class="visual-container">
+            <div class="sphere-box">
+                <canvas id="ring-canvas"></canvas>
+                <div class="sphere" id="core-sphere"></div>
             </div>
-            <h2 id="song-title" style="font-size: 20px; margin-bottom: 10px; text-align: center;">Initializing...</h2>
-            <div class="lyrics-box">
-                <div id="lyric-scroll" style="transition: 0.5s cubic-bezier(0.23, 1, 0.32, 1)"></div>
+            <h2 id="track-name" style="font-family: Orbitron; letter-spacing: 2px;">READY TO PLAY</h2>
+            <div class="lyrics-wrapper">
+                <div id="lyric-content" style="transition: transform 0.5s ease;"></div>
             </div>
         </section>
 
-        <aside class="panel">
-            <h3 style="margin-bottom: 30px; font-family: 'Orbitron'; font-size: 12px; color: var(--secondary);">CORE_COMMAND</h3>
-            <button class="play-main" id="play-btn">
+        <aside class="panel" id="right-panel">
+            <h4 style="font-family: Orbitron; font-size: 12px; color: var(--secondary); margin-bottom: 15px;">COMMAND_CENTER</h4>
+            <button class="btn-play" id="play-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="white" id="p-icon"><path d="M8 5v14l11-7z"/></svg>
             </button>
-            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:10px; color:rgba(255,255,255,0.5)">
-                <span id="cur-time">00:00</span>
-                <span id="dur-time">00:00</span>
+            <div style="font-size: 12px; text-align: center; margin-bottom: 10px;">
+                <span id="time-cur">00:00</span> / <span id="time-dur">00:00</span>
             </div>
-            <input type="range" id="seek-bar" value="0">
-            <div style="margin-top:30px;">
-                <label style="font-size:9px; color:var(--secondary); letter-spacing:1px;">OUTPUT_GAIN</label>
-                <input type="range" id="vol-bar" min="0" max="1" step="0.01" value="0.8">
+            <input type="range" id="seek" value="0" style="width: 100%;">
+            
+            <div style="margin-top: 40px;">
+                <p style="font-size: 10px; color: var(--secondary);">VOLUME_GAIN</p>
+                <input type="range" id="vol" min="0" max="1" step="0.01" value="0.8" style="width: 100%;">
             </div>
         </aside>
     </main>
 
-    <footer class="vis-footer">
-        <canvas id="vis-canvas"></canvas>
-    </footer>
-
     <script>
         const audio = new Audio();
-        let audioCtx, analyser, dataArray, curIdx = 0, currentLyrics = [];
-        let playlist = [];
+        let audioCtx, analyser, dataArray, playlist = [], curIdx = 0, lyrics = [];
 
-        // --- 核心：自動偵測 GitHub 路徑 ---
-        async function initAutoPilot() {
-            // 從網址列解析：https://[user].github.io/[repo]/
+        // 1. 自動讀取 GitHub
+        async function autoLoad() {
             const pathParts = window.location.pathname.split('/').filter(p => p);
-            const hostParts = window.location.hostname.split('.');
-            
-            let user = hostParts[0];
-            let repo = pathParts[0] || "";
+            const user = window.location.hostname.split('.')[0];
+            const repo = pathParts[0] || "";
 
-            // 如果是在本地測試，請在此手動填入你的資訊以供預覽1
-            if(window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") {
-                user = "你的GitHub帳號"; 
-                repo = "你的專案名稱";
-            }
+            // 本地測試用 (若在 GitHub 上會自動覆蓋)
+            let finalUser = user, finalRepo = repo;
+            if(user === "localhost" || user === "127") { finalUser = "你的帳號"; finalRepo = "你的專案"; }
 
-            document.getElementById('repo-name').innerText = `DATA_STREAM: ${user}/${repo}`;
-            
             try {
-                const apiUrl = `https://api.github.com/repos/${user}/${repo}/contents/music`;
-                const response = await fetch(apiUrl);
-                if(!response.ok) throw new Error("Music folder not found");
-                
-                const files = await response.json();
-                const mp3s = files.filter(f => f.name.toLowerCase().endsWith('.mp3'));
+                const res = await fetch(`https://api.github.com/repos/${finalUser}/${finalRepo}/contents/music`);
+                const files = await res.json();
+                const mp3s = files.filter(f => f.name.endsWith('.mp3'));
                 
                 playlist = mp3s.map(f => {
-                    const base = f.name.replace(/\.[^/.]+$/, "");
+                    const name = f.name.replace('.mp3','');
                     return {
-                        name: base,
+                        name: name,
                         url: f.download_url,
-                        lrcUrl: files.find(l => l.name === base + ".lrc")?.download_url || null
+                        lrc: files.find(l => l.name === name + '.lrc')?.download_url
                     };
                 });
 
-                if(playlist.length > 0) {
-                    renderList();
-                    await loadTrack(0, false);
-                    document.getElementById('status-tag').innerText = "SYNC_COMPLETE";
-                } else {
-                    document.getElementById('song-title').innerText = "Folder /music is empty";
-                }
-            } catch (e) {
-                document.getElementById('song-title').innerText = "GitHub API Error";
-                console.error(e);
-            }
+                renderList();
+                if(playlist.length > 0) loadTrack(0, false);
+                document.getElementById('status').innerText = "SYSTEM_ONLINE";
+            } catch (e) { document.getElementById('status').innerText = "OFFLINE_MODE"; }
         }
 
-        // --- 基礎功能函數 ---
-        window.onload = () => {
-            initStars();
-            initAutoPilot();
-        };
-
-        async function loadTrack(index, autoPlay = true) {
-            curIdx = index;
-            const track = playlist[index];
-            audio.src = track.url;
-            document.getElementById('song-title').innerText = track.name;
+        // 2. 核心播放邏輯
+        async function loadTrack(idx, play = true) {
+            curIdx = idx;
+            const t = playlist[idx];
+            audio.src = t.url;
+            document.getElementById('track-name').innerText = t.name;
             
-            currentLyrics = []; // 先清空歌詞
-            if (track.lrcUrl) {
-                try {
-                    const res = await fetch(track.lrcUrl);
-                    const text = await res.text();
-                    currentLyrics = parseLRC(text);
-                } catch (e) { console.warn("LRC Load Failed"); }
+            lyrics = [];
+            if(t.lrc) {
+                const r = await fetch(t.lrc);
+                const txt = await r.text();
+                lyrics = txt.split('\n').map(l => {
+                    const m = l.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+                    return m ? { t: parseInt(m[1])*60 + parseFloat(m[2]), txt: m[3] } : null;
+                }).filter(x => x);
             }
-            
             renderLyrics();
             renderList();
-            if(autoPlay) playToggle(true);
+            if(play) playBtnToggle(true);
         }
 
-        function parseLRC(lrc) {
-            return lrc.split('\n').map(line => {
-                const m = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
-                return m ? { t: parseInt(m[1])*60 + parseFloat(m[2]), txt: m[3].trim() } : null;
-            }).filter(x => x && x.txt);
+        function renderList() {
+            document.getElementById('playlist').innerHTML = playlist.map((t, i) => `
+                <div class="track-card ${i===curIdx?'active':''}" onclick="loadTrack(${i})">
+                    <div style="font-size:10px; opacity:0.5">TRACK_${(i+1).toString().padStart(2,'0')}</div>
+                    <div>${t.name}</div>
+                </div>
+            `).join('');
         }
 
-        function playToggle(forcePlay = false) {
-            if(!audioCtx) initAudio();
-            if(audio.paused || forcePlay) {
+        function renderLyrics() {
+            document.getElementById('lyric-content').innerHTML = lyrics.map((l, i) => `
+                <div class="lyric-line" id="lrc-${i}">${l.txt}</div>
+            `).join('');
+        }
+
+        // 3. 視覺化：環狀頻譜
+        const ringCanvas = document.getElementById('ring-canvas');
+        const ringCtx = ringCanvas.getContext('2d');
+
+        function drawVisuals() {
+            requestAnimationFrame(drawVisuals);
+            if(!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+
+            const w = ringCanvas.width = 400;
+            const h = ringCanvas.height = 400;
+            const cx = w/2, cy = h/2;
+            ringCtx.clearRect(0,0,w,h);
+
+            const bars = 100;
+            const radius = 110;
+
+            for(let i=0; i<bars; i++) {
+                const val = dataArray[i % dataArray.length];
+                const height = (val / 255) * 60;
+                const angle = (i / bars) * Math.PI * 2;
+                
+                const x1 = cx + Math.cos(angle) * radius;
+                const y1 = cy + Math.sin(angle) * radius;
+                const x2 = cx + Math.cos(angle) * (radius + height);
+                const y2 = cy + Math.sin(angle) * (radius + height);
+
+                ringCtx.strokeStyle = `hsla(${280 + val/5}, 100%, 60%, ${val/255 + 0.2})`;
+                ringCtx.lineWidth = 3;
+                ringCtx.beginPath();
+                ringCtx.moveTo(x1, y1);
+                ringCtx.lineTo(x2, y2);
+                ringCtx.stroke();
+            }
+
+            // 球體縮放與背景連動
+            const bass = dataArray[2];
+            document.getElementById('core-sphere').style.transform = `scale(${1 + bass/500})`;
+            document.body.style.background = `radial-gradient(circle, rgba(188,19,254,${bass/1000}) 0%, #050508 70%)`;
+        }
+
+        // 4. 互動：3D Tilt
+        document.addEventListener('mousemove', (e) => {
+            const rx = (window.innerHeight/2 - e.pageY) / 30;
+            const ry = (e.pageX - window.innerWidth/2) / 30;
+            document.querySelectorAll('.panel').forEach(p => {
+                p.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+            });
+        });
+
+        // 5. 事件與啟動
+        function playBtnToggle(force = false) {
+            if(!audioCtx) {
+                audioCtx = new AudioContext();
+                analyser = audioCtx.createAnalyser();
+                const src = audioCtx.createMediaElementSource(audio);
+                src.connect(analyser); analyser.connect(audioCtx.destination);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                drawVisuals();
+            }
+            if(audio.paused || force) {
                 audio.play();
                 document.getElementById('p-icon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
             } else {
@@ -274,96 +337,48 @@
             }
         }
 
-        function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            const source = audioCtx.createMediaElementSource(audio);
-            source.connect(analyser);
-            analyser.connect(audioCtx.destination);
-            analyser.fftSize = 256;
-            dataArray = new Uint8Array(analyser.frequencyBinCount);
-            drawVis();
-        }
-
-        function renderList() {
-            const cont = document.getElementById('list-container');
-            cont.innerHTML = playlist.map((t, i) => `
-                <div class="track-card ${i===curIdx?'active':''}" onclick="loadTrack(${i})">
-                    <div style="font-size:9px; color:var(--secondary); opacity:0.6">#${(i+1).toString().padStart(2,'0')}</div>
-                    <div style="font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">${t.name}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderLyrics() {
-            const scroller = document.getElementById('lyric-scroll');
-            scroller.innerHTML = currentLyrics.length > 0 
-                ? currentLyrics.map((l, i) => `<div class="lyric-item" id="lrc-${i}">${l.txt}</div>`).join('')
-                : `<div class="lyric-item">(Instrumental / No Lyrics)</div>`;
-        }
-
-        function drawVis() {
-            requestAnimationFrame(drawVis);
-            if(!analyser) return;
-            analyser.getByteFrequencyData(dataArray);
-            
-            const vCanvas = document.getElementById('vis-canvas');
-            const vCtx = vCanvas.getContext('2d');
-            vCanvas.width = vCanvas.offsetWidth; vCanvas.height = vCanvas.offsetHeight;
-            const bw = (vCanvas.width / dataArray.length) * 2;
-            
-            dataArray.forEach((v, i) => {
-                const h = (v/255) * vCanvas.height;
-                const g = vCtx.createLinearGradient(0, vCanvas.height, 0, 0);
-                g.addColorStop(0, '#bc13fe'); g.addColorStop(1, '#00f0ff');
-                vCtx.fillStyle = g;
-                vCtx.fillRect(i * (bw+3), vCanvas.height - h, bw, h);
-            });
-
-            const bass = dataArray[2];
-            document.getElementById('sphere').style.transform = `scale(${1 + (bass/255)*0.25})`;
-            document.getElementById('sphere').style.boxShadow = `0 0 ${20 + (bass/255)*60}px rgba(188, 19, 254, 0.6)`;
-        }
-
-        function initStars() {
-            const bg = document.getElementById('bg-canvas');
-            const bCtx = bg.getContext('2d');
-            bg.width = window.innerWidth; bg.height = window.innerHeight;
-            let p = Array(80).fill().map(() => ({x: Math.random()*bg.width, y: Math.random()*bg.height, r: Math.random()*1.5}));
-            function animate() {
-                bCtx.fillStyle = '#020205'; bCtx.fillRect(0,0,bg.width,bg.height);
-                bCtx.fillStyle = "white";
-                p.forEach(s => {
-                    s.y -= 0.2; if(s.y < 0) s.y = bg.height;
-                    bCtx.globalAlpha = Math.random();
-                    bCtx.beginPath(); bCtx.arc(s.x, s.y, s.r, 0, Math.PI*2); bCtx.fill();
-                });
-                requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        document.getElementById('play-btn').onclick = () => playToggle();
+        document.getElementById('play-btn').onclick = () => playBtnToggle();
         audio.ontimeupdate = () => {
             const cur = audio.currentTime;
-            document.getElementById('cur-time').innerText = format(cur);
-            document.getElementById('dur-time').innerText = format(audio.duration);
-            document.getElementById('seek-bar').value = (cur / audio.duration) * 100 || 0;
-            
-            currentLyrics.forEach((l, i) => {
-                if(cur >= l.t && (!currentLyrics[i+1] || cur < currentLyrics[i+1].t)) {
-                    document.querySelectorAll('.lyric-item').forEach(el => el.classList.remove('active'));
-                    const activeLrc = document.getElementById(`lrc-${i}`);
-                    if(activeLrc) {
-                        activeLrc.classList.add('active');
-                        document.getElementById('lyric-scroll').style.transform = `translateY(${-activeLrc.offsetTop + 70}px)`;
+            document.getElementById('time-cur').innerText = fmt(cur);
+            document.getElementById('time-dur').innerText = fmt(audio.duration);
+            document.getElementById('seek').value = (cur/audio.duration)*100 || 0;
+
+            lyrics.forEach((l, i) => {
+                if(cur >= l.t && (!lyrics[i+1] || cur < lyrics[i+1].t)) {
+                    document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('active'));
+                    const el = document.getElementById(`lrc-${i}`);
+                    if(el) {
+                        el.classList.add('active');
+                        document.getElementById('lyric-content').style.transform = `translateY(${-el.offsetTop + 50}px)`;
                     }
                 }
             });
         };
-        function format(s) { return isNaN(s)?"00:00":Math.floor(s/60).toString().padStart(2,'0')+":"+Math.floor(s%60).toString().padStart(2,'0'); }
-        document.getElementById('seek-bar').oninput = (e) => audio.currentTime = (e.target.value/100)*audio.duration;
-        document.getElementById('vol-bar').oninput = (e) => audio.volume = e.target.value;
+
+        function fmt(s) { return isNaN(s)?"00:00":Math.floor(s/60).toString().padStart(2,'0')+":"+Math.floor(s%60).toString().padStart(2,'0'); }
+        document.getElementById('seek').oninput = (e) => audio.currentTime = (e.target.value/100)*audio.duration;
+        document.getElementById('vol').oninput = (e) => audio.volume = e.target.value;
+
+        // 星空背景 (簡化版)
+        function initStars() {
+            const c = document.getElementById('bg-canvas');
+            const ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            const pts = Array(100).fill().map(() => ({x:Math.random()*c.width, y:Math.random()*c.height, s:Math.random()}));
+            function anim() {
+                ctx.fillStyle = '#050508'; ctx.fillRect(0,0,c.width,c.height);
+                ctx.fillStyle = '#fff';
+                pts.forEach(p => {
+                    p.y -= 0.1; if(p.y<0) p.y=c.height;
+                    ctx.globalAlpha = p.s; ctx.fillRect(p.x, p.y, 1, 1);
+                });
+                requestAnimationFrame(anim);
+            }
+            anim();
+        }
+        initStars();
+        autoLoad();
     </script>
 </body>
 </html>
