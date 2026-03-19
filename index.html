@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suno AI Infinity | GitHub Showcase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #020205;
+            --primary: #bc13fe;
+            --secondary: #00f0ff;
+            --accent: #ff007a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: -2; }
+        .scanlines {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none; z-index: -1;
+        }
+
+        header {
+            padding: 30px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+
+        .brand h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            letter-spacing: 4px;
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(0,240,255,0.5));
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 320px 1fr 320px;
+            gap: 25px;
+            padding: 0 30px 20px;
+            flex: 1;
+            perspective: 1000px;
+        }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+            transition: transform 0.1s ease-out;
+        }
+
+        .track-card {
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.03);
+            border-left: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .track-card:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
+        .track-card.active {
+            background: rgba(161, 52, 255, 0.1);
+            border-left-color: var(--secondary);
+        }
+
+        .visual-core { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .sphere-wrapper { position: relative; width: 280px; height: 280px; margin-bottom: 40px; }
+        .sphere {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, var(--secondary), var(--primary), #000);
+            box-shadow: 0 0 60px rgba(188, 19, 254, 0.4);
+            transition: transform 0.1s ease;
+        }
+
+        .lyrics-box {
+            width: 100%; height: 220px; overflow: hidden; position: relative;
+            mask-image: linear-gradient(transparent, #000 20%, #000 80%, transparent);
+        }
+        .lyric-item {
+            font-size: 18px; color: rgba(255,255,255,0.3);
+            padding: 10px 0; text-align: center; transition: all 0.4s;
+        }
+        .lyric-item.active { color: #fff; transform: scale(1.2); text-shadow: 0 0 15px var(--secondary); }
+
+        .play-main {
+            width: 70px; height: 70px; border-radius: 50%; border: none;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; box-shadow: 0 0 20px rgba(188, 19, 254, 0.4);
+        }
+
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: var(--secondary); border-radius: 50%; }
+
+        .vis-footer { height: 80px; width: 100%; padding: 0 30px 10px; }
+        #vis-canvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="scanlines"></div>
+
+    <header>
+        <div class="brand">
+            <h1>SUNO INFINITY</h1>
+            <div style="font-size: 10px; color: var(--secondary); letter-spacing: 3px;">LIVE REPOSITORY</div>
+        </div>
+        <div id="status-tag" style="font-size: 12px; color: var(--accent); font-family: 'Orbitron';">SYSTEM_READY</div>
+    </header>
+
+    <main id="tilt-container">
+        <aside class="panel">
+            <h3 style="margin-bottom: 20px; font-family: 'Orbitron'; font-size: 12px; color: var(--secondary);">DB_MANIFEST</h3>
+            <div id="list-container" style="overflow-y:auto; flex:1"></div>
+        </aside>
+
+        <section class="visual-core">
+            <div class="sphere-wrapper">
+                <div class="sphere" id="sphere"></div>
+            </div>
+            <h2 id="song-title" style="font-size: 22px; margin-bottom: 10px; text-align: center;">Loading Archive...</h2>
+            <div class="lyrics-box">
+                <div id="lyric-scroll" style="transition: 0.5s ease-out"></div>
+            </div>
+        </section>
+
+        <aside class="panel">
+            <h3 style="margin-bottom: 30px; font-family: 'Orbitron'; font-size: 12px; color: var(--secondary);">CONTROL_UNIT</h3>
+            <button class="play-main" id="play-btn">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="white" id="p-icon"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:10px;">
+                <span id="cur-time">00:00</span>
+                <span id="dur-time">00:00</span>
+            </div>
+            <input type="range" id="seek-bar" value="0">
+            <div style="margin-top:30px;">
+                <label style="font-size:10px; color:var(--secondary);">MASTER_VOL</label>
+                <input type="range" id="vol-bar" min="0" max="1" step="0.01" value="0.8">
+            </div>
+        </aside>
+    </main>
+
+    <footer class="vis-footer">
+        <canvas id="vis-canvas"></canvas>
+    </footer>
+
+    <script>
+        // 1. 設定你的預設歌曲路徑 (請在此修改)
+        const playlist = [
+            { name: "Suno Track 01", url: "music/track1.mp3", lrcUrl: "music/track1.lrc" },
+            { name: "Suno Track 02", url: "music/track2.mp3", lrcUrl: "music/track2.lrc" }
+        ];
+
+        const audio = new Audio();
+        let audioCtx, analyser, dataArray, curIdx = 0, currentLyrics = [];
+
+        // 2. 初始化加載 (自動讀取預設檔案)
+        window.onload = async () => {
+            initStars();
+            renderList();
+            await loadTrack(0, false); // 預載第一首，但不自動播放 (符合瀏覽器規範)
+            document.getElementById('status-tag').innerText = "ARCHIVE_LOADED";
+        };
+
+        async function loadTrack(index, autoPlay = true) {
+            curIdx = index;
+            const track = playlist[index];
+            audio.src = track.url;
+            document.getElementById('song-title').innerText = track.name;
+            
+            // 嘗試抓取歌詞
+            if (track.lrcUrl) {
+                try {
+                    const res = await fetch(track.lrcUrl);
+                    const text = await res.text();
+                    currentLyrics = parseLRC(text);
+                } catch (e) { 
+                    currentLyrics = [{t:0, txt: "(No Lyrics Data)"}]; 
+                }
+            }
+            
+            renderLyrics();
+            renderList();
+            if(autoPlay) playToggle(true);
+        }
+
+        function parseLRC(lrc) {
+            return lrc.split('\n').map(line => {
+                const m = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+                return m ? { t: parseInt(m[1])*60 + parseFloat(m[2]), txt: m[3].trim() } : null;
+            }).filter(x => x && x.txt);
+        }
+
+        // 3. UI 與 視覺控制
+        function playToggle(forcePlay = false) {
+            if(!audioCtx) initAudio();
+            if(audio.paused || forcePlay) {
+                audio.play();
+                document.getElementById('p-icon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            } else {
+                audio.pause();
+                document.getElementById('p-icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+            }
+        }
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            const source = audioCtx.createMediaElementSource(audio);
+            source.connect(analyser);
+            analyser.connect(audioCtx.destination);
+            analyser.fftSize = 256;
+            dataArray = new Uint8Array(analyser.frequencyBinCount);
+            drawVis();
+        }
+
+        function renderList() {
+            const cont = document.getElementById('list-container');
+            cont.innerHTML = playlist.map((t, i) => `
+                <div class="track-card ${i===curIdx?'active':''}" onclick="loadTrack(${i})">
+                    <div style="font-size:10px; color:var(--secondary)">DATA_${i+1}</div>
+                    <div style="font-weight:600; font-size:14px;">${t.name}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderLyrics() {
+            const scroller = document.getElementById('lyric-scroll');
+            scroller.innerHTML = currentLyrics.map((l, i) => `<div class="lyric-item" id="lrc-${i}">${l.txt}</div>`).join('');
+        }
+
+        // 4. 動畫循環
+        function drawVis() {
+            requestAnimationFrame(drawVis);
+            if(!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+            
+            const vCanvas = document.getElementById('vis-canvas');
+            const vCtx = vCanvas.getContext('2d');
+            vCanvas.width = vCanvas.offsetWidth; vCanvas.height = vCanvas.offsetHeight;
+            const bw = (vCanvas.width / dataArray.length) * 2;
+            
+            dataArray.forEach((v, i) => {
+                const h = (v/255) * vCanvas.height;
+                vCtx.fillStyle = `rgba(0, 240, 255, ${v/255 + 0.2})`;
+                vCtx.fillRect(i * (bw+2), vCanvas.height - h, bw, h);
+            });
+
+            const bass = dataArray[2];
+            document.getElementById('sphere').style.transform = `scale(${1 + (bass/255)*0.3})`;
+        }
+
+        // 背景與互動
+        function initStars() {
+            const bg = document.getElementById('bg-canvas');
+            const bCtx = bg.getContext('2d');
+            bg.width = window.innerWidth; bg.height = window.innerHeight;
+            function animate() {
+                bCtx.clearRect(0,0,bg.width,bg.height);
+                bCtx.fillStyle = "rgba(188, 19, 254, 0.2)";
+                for(let i=0; i<50; i++) bCtx.fillRect(Math.random()*bg.width, Math.random()*bg.height, 2, 2);
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // 綁定控制
+        document.getElementById('play-btn').onclick = () => playToggle();
+        audio.ontimeupdate = () => {
+            const cur = audio.currentTime;
+            document.getElementById('cur-time').innerText = format(cur);
+            document.getElementById('dur-time').innerText = format(audio.duration);
+            document.getElementById('seek-bar').value = (cur / audio.duration) * 100 || 0;
+            
+            currentLyrics.forEach((l, i) => {
+                if(cur >= l.t && (!currentLyrics[i+1] || cur < currentLyrics[i+1].t)) {
+                    document.querySelectorAll('.lyric-item').forEach(el => el.classList.remove('active'));
+                    const activeLrc = document.getElementById(`lrc-${i}`);
+                    if(activeLrc) {
+                        activeLrc.classList.add('active');
+                        document.getElementById('lyric-scroll').style.transform = `translateY(${-activeLrc.offsetTop + 80}px)`;
+                    }
+                }
+            });
+        };
+        function format(s) { return isNaN(s)?"00:00":Math.floor(s/60).toString().padStart(2,'0')+":"+Math.floor(s%60).toString().padStart(2,'0'); }
+        document.getElementById('seek-bar').oninput = (e) => audio.currentTime = (e.target.value/100)*audio.duration;
+        document.getElementById('vol-bar').oninput = (e) => audio.volume = e.target.value;
+    </script>
+</body>
+</html>
